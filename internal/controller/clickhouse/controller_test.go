@@ -147,6 +147,61 @@ var _ = When("reconciling ClickHouseCluster", Ordered, func() {
 		})
 	})
 
+	It("should propagate version probe overrides to the job", func(ctx context.Context) {
+		By("updating the CR with version probe overrides")
+
+		updatedCR := cr.DeepCopy()
+		Expect(suite.Client.Get(ctx, cr.NamespacedName(), updatedCR)).To(Succeed())
+		updatedCR.Spec.VersionProbeTemplate = &v1.VersionProbeTemplate{
+			Spec: v1.VersionProbeJobSpec{
+				Template: v1.VersionProbePodTemplate{
+					Metadata: v1.TemplateMeta{
+						Annotations: map[string]string{
+							"sidecar.istio.io/inject": "false",
+						},
+						Labels: map[string]string{
+							"probe-label": "probe-value",
+						},
+					},
+				},
+			},
+		}
+		updatedCR.Spec.PodTemplate.Tolerations = []corev1.Toleration{
+			{Key: "workload", Operator: corev1.TolerationOpEqual, Value: "system", Effect: corev1.TaintEffectNoSchedule},
+		}
+		Expect(suite.Client.Update(ctx, updatedCR)).To(Succeed())
+
+		// Delete old job so new one is created with overrides.
+		for _, j := range jobs.Items {
+			Expect(suite.Client.Delete(ctx, &j, client.PropagationPolicy(metav1.DeletePropagationBackground))).To(Succeed())
+		}
+
+		_, err := controller.Reconcile(ctx, ctrl.Request{NamespacedName: cr.NamespacedName()})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(suite.Client.Get(ctx, cr.NamespacedName(), updatedCR)).To(Succeed())
+
+		listOpts := controllerutil.AppRequirements(cr.Namespace, cr.SpecificName())
+		Expect(suite.Client.List(ctx, &jobs, listOpts)).To(Succeed())
+		Expect(jobs.Items).To(HaveLen(1))
+
+		By("verifying annotations on Pod template only")
+		Expect(jobs.Items[0].Spec.Template.Annotations).To(HaveKeyWithValue("sidecar.istio.io/inject", "false"))
+
+		By("verifying probe-specific labels on Pod template only")
+		Expect(jobs.Items[0].Spec.Template.Labels).To(HaveKeyWithValue("probe-label", "probe-value"))
+
+		By("verifying operator-reserved labels are preserved")
+		Expect(jobs.Items[0].Labels[controllerutil.LabelRoleKey]).To(Equal(controllerutil.LabelVersionProbe))
+		Expect(jobs.Items[0].Labels[controllerutil.LabelAppKey]).To(Equal(cr.SpecificName()))
+
+		By("verifying scheduling fields inherited from PodTemplate")
+		Expect(jobs.Items[0].Spec.Template.Spec.Tolerations).To(ContainElement(corev1.Toleration{
+			Key: "workload", Operator: corev1.TolerationOpEqual, Value: "system", Effect: corev1.TaintEffectNoSchedule,
+		}))
+
+		cr = updatedCR.DeepCopy()
+	})
+
 	It("should propagate meta attributes for every resource", func() {
 		expectedOwnerRef := metav1.OwnerReference{
 			Kind:               "ClickHouseCluster",
@@ -272,6 +327,7 @@ var _ = When("reconciling ClickHouseCluster", Ordered, func() {
 
 	It("should reflect configuration changes in revisions", func(ctx context.Context) {
 		updatedCR := cr.DeepCopy()
+		Expect(suite.Client.Get(ctx, cr.NamespacedName(), updatedCR)).To(Succeed())
 		updatedCR.Spec.Settings.Logger.Level = "warning"
 		Expect(suite.Client.Update(ctx, updatedCR)).To(Succeed())
 		_, err := controller.Reconcile(ctx, ctrl.Request{NamespacedName: cr.NamespacedName()})

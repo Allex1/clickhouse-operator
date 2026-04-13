@@ -76,6 +76,10 @@ type ClickHouseClusterSpec struct {
 	// +optional
 	// +kubebuilder:validation:Pattern=`^(lts|stable|\d+\.\d+)?$`
 	UpgradeChannel string `json:"upgradeChannel,omitempty"`
+
+	// VersionProbeTemplate overrides for the version detection Job.
+	// +optional
+	VersionProbeTemplate *VersionProbeTemplate `json:"versionProbeTemplate,omitempty"`
 }
 
 // WithDefaults sets default values for ClickHouseClusterSpec fields.
