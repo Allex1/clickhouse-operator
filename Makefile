@@ -187,7 +187,7 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 
 .PHONY: generate-helmchart
 generate-helmchart: kubebuilder ## Generate helm charts
-	$(KUBEBUILDER) edit --plugins=helm/v2-alpha
+	$(KUBEBUILDER) edit --plugins=helm/v2-alpha --force
 	rm .github/workflows/test-chart.yml dist/install.yaml
 
 .PHONY: generate-helmchart-ci
@@ -331,7 +331,7 @@ CONTROLLER_TOOLS_VERSION ?= v0.20.1
 ENVTEST_VERSION ?= release-0.23
 GOLANGCI_LINT_VERSION ?= v2.11.4
 GINKGO_VERSION ?= v2.28.1
-KUBEBUILDER_VERSION ?= v4.13.1
+KUBEBUILDER_VERSION ?= v4.14.0
 CODESPELL_VERSION ?= 2.4.2
 CRD_SCHEMA_CHECKER_VERSION ?= latest
 CRD_REF_DOCS_VERSION ?= v0.3.0
