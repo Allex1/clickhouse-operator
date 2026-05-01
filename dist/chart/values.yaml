@@ -137,15 +137,9 @@ manager:
 
   ## Extra volumes and volume mounts
   ##
-  extraVolumes:
-    - name: serving-certs
-      secret:
-        secretName: serving-cert
+  extraVolumes: []
 
-  extraVolumeMounts:
-    - mountPath: /tmp/k8s-webhook-server/serving-certs
-      name: serving-certs
-      readOnly: true
+  extraVolumeMounts: []
 
 ## RBAC configuration
 ##
