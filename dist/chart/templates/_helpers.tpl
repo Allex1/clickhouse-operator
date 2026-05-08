@@ -2,7 +2,7 @@
 Expand the name of the chart.
 */}}
 {{- define "clickhouse-operator.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- default (trimSuffix "-helm" .Chart.Name) .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -14,7 +14,7 @@ If release name contains chart name it will be used as a full name.
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- $name := include "clickhouse-operator.name" . }}
 {{- if contains $name .Release.Name }}
 {{- .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -50,12 +50,25 @@ Dynamically calculates safe truncation to ensure total name length <= 63 chars.
 {{- end }}
 
 {{/*
+Util function for generating the image URL based on the provided options.
+Cribbed from the cert-manager organization.
+*/}}
+{{- define "clickhouse-operator.image" -}}
+{{- $defaultTag := index . 1 -}}
+{{- with index . 0 -}}
+{{ printf .repository }}
+{{- if .digest -}}{{ printf "@%s" .digest }}{{- else -}}{{ printf ":%s" (default $defaultTag .tag) }}{{- end -}}
+{{- end }}
+{{- end }}
+
+{{/*
 ServiceAccount name to use.
-If serviceAccount.enable is false and serviceAccount.name is set, use that name.
-Otherwise, use the standard resourceName helper with "controller-manager" suffix.
+If serviceAccount.enable is explicitly false and serviceAccount.name is set,
+use that name. Otherwise, use the standard resourceName helper with
+"controller-manager" suffix.
 */}}
 {{- define "clickhouse-operator.serviceAccountName" -}}
-{{- if and (not (.Values.serviceAccount.enable | default true)) .Values.serviceAccount.name }}
+{{- if and (hasKey .Values.serviceAccount "enable") (not .Values.serviceAccount.enable) .Values.serviceAccount.name }}
 {{- .Values.serviceAccount.name }}
 {{- else }}
 {{- include "clickhouse-operator.resourceName" (dict "suffix" "controller-manager" "context" .) }}

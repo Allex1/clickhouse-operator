@@ -190,17 +190,15 @@ lint-fix: golangci-lint ## Run golangci-lint linter and perform fixes
 ##@ Helm Chart
 
 .PHONY: generate-helmchart
-generate-helmchart: kubebuilder ## Generate helm charts
-	$(KUBEBUILDER) edit --plugins=helm/v2-alpha
-	rm .github/workflows/test-chart.yml dist/install.yaml
+generate-helmchart: kubebuilder kustomize ## Generate helm charts
+	$(KUSTOMIZE) build config/helm -o dist/install-helm.yaml
+	$(KUBEBUILDER) edit --plugins=helm/v2-alpha --manifests dist/install-helm.yaml
+	rm .github/workflows/test-chart.yml dist/install-helm.yaml
 
 .PHONY: generate-helmchart-ci
 generate-helmchart-ci: generate-helmchart ## Generate helm charts and reset some files that will always generate diff
 	git checkout dist/chart/templates/cert-manager/
 	git checkout dist/chart/templates/manager/
-	git checkout dist/chart/templates/metrics/
-	git checkout dist/chart/templates/monitoring/
-	git checkout dist/chart/templates/webhook/
 
 .PHONY: build-helmchart-dependencies
 build-helmchart-dependencies: ## Build helm chart dependencies

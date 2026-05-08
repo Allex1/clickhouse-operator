@@ -1,8 +1,8 @@
 apiVersion: v2
-name: clickhouse-operator
+name: clickhouse-operator-helm
 type: application
-version: 0.0.2
-appVersion: "0.0.4"
+version: 0.0.1
+appVersion: "latest"
 kubeVersion: ">= 1.28.0-0"
 description: |
   The ClickHouse Operator is a Kubernetes operator that automates the deployment, configuration, and management of ClickHouse clusters and ClickHouse Keeper clusters on Kubernetes.
@@ -15,8 +15,3 @@ maintainers:
     email: operator@clickhouse.com
 home: https://github.com/ClickHouse/clickhouse-operator
 icon: "https://clickhouse.com/docs/img/clickhouse-operator-logo.svg"
-dependencies:
-  - name: cert-manager
-    version: "v1.19.2"
-    repository: "oci://quay.io/jetstack/charts"
-    condition: certManager.install

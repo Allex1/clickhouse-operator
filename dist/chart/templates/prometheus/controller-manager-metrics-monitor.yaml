@@ -20,25 +20,25 @@ spec:
     scheme: {{ if .Values.metrics.secure }}https{{ else }}http{{ end }}
     {{- if .Values.metrics.secure }}
     tlsConfig:
-      serverName: {{ include "clickhouse-operator.resourceName" (dict "suffix" "controller-manager-metrics-service" "context" $) }}.{{ .Release.Namespace }}.svc
+      serverName: {{ include "clickhouse-operator.resourceName" (dict "suffix" "metrics-service" "context" $) }}.{{ .Release.Namespace }}.svc
       {{- if .Values.certManager.enable }}
       ca:
         secret:
-          name: metrics-server-cert
           key: ca.crt
+          name: metrics-server-cert
       cert:
         secret:
-          name: metrics-server-cert
           key: tls.crt
+          name: metrics-server-cert
       keySecret:
-        name: metrics-server-cert
         key: tls.key
+        name: metrics-server-cert
+      insecureSkipVerify: false
       {{- else }}
       insecureSkipVerify: true
       {{- end }}
     {{- end }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "clickhouse-operator.name" . }}
       control-plane: controller-manager
 {{- end }}
