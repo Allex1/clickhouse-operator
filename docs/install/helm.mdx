@@ -77,11 +77,22 @@ controller:
   watchNamespaces:
     - "{{ .Release.Namespace }}"
     - team-a
-rbac:
-  namespaced: true  # only when the release namespace is the sole watched namespace
 ```
 
-With `rbac.namespaced: true` the operator gets a Role/RoleBinding in the release namespace only,
+On the command line, `--set` parses braces as list syntax, so use `--set-json` (Helm v3.10 or later):
+`--set-json 'controller.watchNamespaces=["{{ .Release.Namespace }}"]'`.
+
+To watch only the release namespace with namespace-scoped RBAC:
+
+```yaml
+controller:
+  watchNamespaces:
+    - "{{ .Release.Namespace }}"
+rbac:
+  namespaced: true
+```
+
+With `rbac.namespaced: true` the manager's permissions become a Role/RoleBinding in the release namespace,
 so watching other namespaces requires cluster-scoped RBAC (the default).
 
 ### Configuration options {#configuration-options}
